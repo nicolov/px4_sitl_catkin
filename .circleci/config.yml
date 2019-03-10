@@ -1,0 +1,23 @@
+version: 2
+
+jobs:
+    build:
+        docker:
+            - image: nicolov/gazebo-headless-docker:0.0.2
+        working_directory: /catkin_ws
+        steps:
+            - checkout:
+                path: /catkin_ws/src/px4_sitl_catkin
+            - run: mkdir -p /catkin_ws/src/catkin_simple
+            - run: >
+                cd /catkin_ws/src/catkin_simple
+                && wget https://github.com/catkin/catkin_simple/archive/0e62848b12da76c8cc58a1add42b4f894d1ac21e.tar.gz
+                && tar --strip-components=1 -xvf *.tar.gz
+            - run: catkin config --init --mkdirs --extend /opt/ros/melodic --cmake-args -DCMAKE_BUILD_TYPE=Release
+            # PX4 embeds a Ninja call that spawns one job per core, but CircleCI only allows
+            # 4GB of RAM. Hack things so we don't run OOM.
+            - run: echo '/usr/bin/ninja -j2 "$@"' > /usr/local/bin/ninja && chmod +x /usr/local/bin/ninja
+            - run: catkin build -j2
+            - run: source /catkin_ws/devel/setup.bash && src/px4_sitl_catkin/scripts/record-video.sh roslaunch px4_sitl_catkin px4_gazebo_sitl.launch || file /tmp/recordings/video.mkv
+            - store_artifacts:
+                path: /tmp/recordings

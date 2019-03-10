@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="px4_sitl_catkin" type="start_sitl.py" name="start_sitl"
+          args="--sitl-root=/catkin_ws/devel/share/px4_sitl_catkin"
+          output="screen" required="true">
+    </node>
+</launch>
